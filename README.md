@@ -1,12 +1,13 @@
 # SwiftMCP
 
-A Swift Package that implements an MCP (Machine Control Protocol) client for iOS and macOS, enabling native API integration through a JSON-RPC interface.
+A Swift Package that implements an MCP (Machine Control Protocol) client for iOS and macOS, enabling native API integration through a JSON-RPC interface. The package also includes an OpenAI-compatible function calling bridge.
 
 ## Features
 
 - JSON-RPC 2.0 compliant interface
 - Modular tool architecture for easy extension
-- Built-in HealthKit integration
+- Built-in HealthKit integration with comprehensive workout support
+- OpenAI function calling compatibility
 - Comprehensive error handling
 - Thread-safe design
 - Fully documented API
@@ -54,18 +55,49 @@ do {
 }
 ```
 
+### OpenAI Function Calling Bridge
+
+```swift
+// Create and set up the OpenAI bridge
+let openAIRegistry = OpenAIToolRegistry()
+
+// Register your MCP tools with their schemas
+openAIRegistry.registerTool(healthKitTool, schema: healthKitToolSchema)
+
+// Get OpenAI function definitions
+let functions = try openAIRegistry.getOpenAIFunctions()
+
+// Handle OpenAI tool calls
+let toolCalls: [OpenAIBridge.ToolCall] = ... // from OpenAI response
+let toolResponses = try await openAIRegistry.handleToolCalls(toolCalls)
+```
+
 ### Handling JSON-RPC Requests
 
 ```swift
-// Example JSON-RPC request for step count
+// Example JSON-RPC request for health data
 let request: [String: Any] = [
     "jsonrpc": "2.0",
-    "method": "healthKit/getSteps",
+    "method": "healthKit",
     "params": [
-        "startDate": "2024-03-20T00:00:00Z",
-        "endDate": "2024-03-20T23:59:59Z"
+        "action": "getData",
+        "dataType": "stepCount",
+        "timeRange": "today"
     ],
     "id": "1"
+]
+
+// Example JSON-RPC request for workouts
+let workoutRequest: [String: Any] = [
+    "jsonrpc": "2.0",
+    "method": "healthKit",
+    "params": [
+        "action": "getWorkouts",
+        "workoutType": "running",
+        "includeRoutes": true,
+        "timeRange": "last_week"
+    ],
+    "id": "2"
 ]
 
 if let data = try? JSONSerialization.data(withJSONObject: request) {
@@ -90,18 +122,40 @@ class CustomTool: MCPTool {
 
 ### HealthKitTool
 
-Provides access to HealthKit data through the MCP interface.
+Provides comprehensive access to HealthKit data through the MCP interface.
 
 #### Methods
 
-- `healthKit/getSteps`
-  - Parameters:
-    - `startDate` (optional): ISO8601 string representing the start date (defaults to start of today)
-    - `endDate` (optional): ISO8601 string representing the end date (defaults to now)
-  - Returns:
-    - `steps`: Integer representing the step count
-    - `startDate`: ISO8601 string of the actual start date used
-    - `endDate`: ISO8601 string of the actual end date used
+- `healthKit`
+
+  - Actions:
+
+    - `getData`: Retrieve health metrics
+
+      - Parameters:
+        - `dataType`: Type of health data to retrieve (e.g., "stepCount", "heartRate")
+        - `timeRange` (optional): Predefined range ("today", "yesterday", "this_week", etc.)
+        - `duration` (optional): ISO 8601 duration string (e.g., "P7D" for 7 days)
+      - Returns:
+        - `dataType`: The type of data retrieved
+        - `unit`: The unit of measurement
+        - `samples`: Array of data points with values and timestamps
+
+    - `getWorkouts`: Retrieve workout data
+      - Parameters:
+        - `workoutType` (optional): Type of workout to filter by (e.g., "running", "cycling")
+        - `includeRoutes` (optional): Boolean to include GPS route data
+        - `timeRange` (optional): Predefined range
+        - `duration` (optional): ISO 8601 duration string
+      - Returns:
+        - `workouts`: Array of workout data including:
+          - `type`: Workout type
+          - `startDate`: Start timestamp
+          - `endDate`: End timestamp
+          - `duration`: Duration in seconds
+          - `distance` (optional): Distance in meters
+          - `calories` (optional): Energy burned in kilocalories
+          - `route` (optional): Array of GPS coordinates with timestamps
 
 ## Error Handling
 
