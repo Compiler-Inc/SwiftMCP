@@ -7,25 +7,6 @@
 
 import Foundation
 
-/// Represents a JSON-RPC request
-struct JSONRPCRequest {
-    let jsonrpc: String
-    let method: String
-    let params: [String: Any]
-    let id: String
-    
-    static func parse(_ json: [String: Any]) -> Result<JSONRPCRequest, MCPError> {
-        guard let version = json["jsonrpc"] as? String,
-              let method = json["method"] as? String,
-              let id = json["id"] as? String else {
-            return .failure(.invalidParams("Missing required JSON-RPC fields"))
-        }
-        
-        let params = json["params"] as? [String: Any] ?? [:]
-        return .success(JSONRPCRequest(jsonrpc: version, method: method, params: params, id: id))
-    }
-}
-
 /// The main MCP client that handles JSON-RPC message routing and tool execution
 public class MCPClient {
     /// The registry containing all available tools
@@ -43,80 +24,59 @@ public class MCPClient {
         self.toolRegistry = toolRegistry
         self.responseHandler = responseHandler
     }
-    
+
     /// Handle an incoming JSON-RPC message
     /// - Parameter data: Raw JSON data containing the request
-    public func handleIncomingMessage(data: Data) {
+    public func handleIncomingMessage(data: Data) async throws {
         do {
-            guard let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] else {
-                sendErrorResponse(id: nil, error: .invalidParams("Invalid JSON format"))
+            let request = try JSONDecoder().decode(JSONRPCRequest.self, from: data)
+            
+            // Lookup the tool associated with the method
+            guard let tool = toolRegistry.tool(for: request.method) else {
+                try sendErrorResponse(id: request.id, error: .toolNotFound)
                 return
             }
             
-            // Parse the JSON-RPC request
-            let requestResult = JSONRPCRequest.parse(json)
-            switch requestResult {
-            case .success(let request):
-                handleRequest(request)
-            case .failure(let error):
-                sendErrorResponse(id: json["id"] as? String, error: error)
-            }
+            let result = try await tool.handle(params: request.params)
+            try sendSuccessResponse(id: request.id, result: result)
         } catch {
-            sendErrorResponse(id: nil, error: .invalidParams("JSON parsing error: \(error.localizedDescription)"))
-        }
-    }
-    
-    /// Handle a parsed JSON-RPC request
-    private func handleRequest(_ request: JSONRPCRequest) {
-        // Lookup the tool associated with the method
-        guard let tool = toolRegistry.tool(for: request.method) else {
-            sendErrorResponse(id: request.id, error: .toolNotFound)
-            return
-        }
-        
-        // Execute the tool's handler
-        tool.handle(params: request.params) { result in
-            switch result {
-            case .success(let resultData):
-                self.sendSuccessResponse(id: request.id, result: resultData)
-            case .failure(let error):
-                self.sendErrorResponse(id: request.id, error: error)
-            }
+            let rawJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let id = (rawJson?["id"] as? String) ?? "null"
+            let error = MCPError.invalidRequest("Invalid JSON-RPC request format")
+            try sendErrorResponse(id: id, error: error)
+            throw error
         }
     }
     
     /// Send a success response
-    private func sendSuccessResponse(id: String, result: Any) {
-        let response: [String: Any] = [
-            "jsonrpc": "2.0",
-            "id": id,
-            "result": result
+    private func sendSuccessResponse(id: String, result: [String: JSON]) throws {
+        let response: [String: JSON] = [
+            "jsonrpc": .string("2.0"),
+            "id": .string(id),
+            "result": .object(result)
         ]
-        sendResponse(response)
+        try sendResponse(response)
     }
     
     /// Send an error response
-    private func sendErrorResponse(id: String?, error: MCPError) {
-        let response: [String: Any] = [
-            "jsonrpc": "2.0",
-            "id": id ?? "null",
-            "error": [
-                "code": error.jsonRpcCode,
-                "message": error.description
-            ]
+    private func sendErrorResponse(id: String?, error: MCPError) throws {
+        let response: [String: JSON] = [
+            "jsonrpc": .string("2.0"),
+            "id": .string(id ?? "null"),
+            "error": .object([
+                "code": .number(Double(error.jsonRpcCode)),
+                "message": .string(error.description)
+            ])
         ]
-        sendResponse(response)
+        try sendResponse(response)
     }
     
     /// Serialize and send a response via the response handler
-    private func sendResponse(_ response: [String: Any]) {
-        do {
-            let data = try JSONSerialization.data(withJSONObject: response, options: [.prettyPrinted])
-            if let jsonString = String(data: data, encoding: .utf8) {
-                responseHandler(jsonString)
-            }
-        } catch {
-            print("Error serializing response: \(error)")
+    private func sendResponse(_ response: [String: JSON]) throws {
+        let jsonData = try JSONEncoder().encode(response)
+        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+            throw MCPError.invalidParams("Failed to serialize response to JSON")
         }
+        responseHandler(jsonString)
     }
-} 
+}

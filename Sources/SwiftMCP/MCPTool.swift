@@ -19,12 +19,11 @@ public protocol MCPTool {
     
     /// Handle the incoming JSON-RPC call.
     /// - Parameters:
-    ///   - params: The JSON-RPC parameters as a dictionary. The structure of these parameters
-    ///            should be documented by each tool implementation.
+    ///   - params: The JSON-RPC parameters as a dictionary of JSON values
     ///   - completion: Completion handler that should be called with either a success value
     ///                that can be serialized to JSON, or an MCPError on failure.
     /// - Note: Implementations should be thread-safe and handle their own background execution if needed.
-    func handle(params: [String: Any], completion: @escaping (Result<Any, MCPError>) -> Void)
+    func handle(params: [String: JSON]) async throws -> [String: JSON]
 }
 
 /// Extension providing default implementations and utility methods for MCPTool
@@ -34,7 +33,7 @@ public extension MCPTool {
     ///   - required: Array of required parameter keys
     ///   - params: The parameters dictionary to validate
     /// - Returns: A Result containing void on success or an MCPError on failure
-    func validateParams(_ required: [String], in params: [String: Any]) -> Result<Void, MCPError> {
+    func validateParams(_ required: [String], in params: [String: JSON]) -> Result<Void, MCPError> {
         let missing = required.filter { !params.keys.contains($0) }
         if !missing.isEmpty {
             return .failure(.invalidParams("Missing required parameters: \(missing.joined(separator: ", "))"))
