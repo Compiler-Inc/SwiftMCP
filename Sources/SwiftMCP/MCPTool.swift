@@ -24,7 +24,7 @@ public protocol MCPTool {
     ///   - completion: Completion handler that should be called with either a success value
     ///                that can be serialized to JSON, or an MCPError on failure.
     /// - Note: Implementations should be thread-safe and handle their own background execution if needed.
-    func handle(params: [String: Any], completion: @escaping (Result<Any, MCPError>) -> Void)
+    func handle(params: [String: Any]) async throws -> [String: Any]
 }
 
 /// Extension providing default implementations and utility methods for MCPTool

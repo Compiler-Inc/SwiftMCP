@@ -75,14 +75,22 @@ public class MCPClient {
         }
         
         // Execute the tool's handler
-        tool.handle(params: request.params) { result in
-            switch result {
-            case .success(let resultData):
-                self.sendSuccessResponse(id: request.id, result: resultData)
-            case .failure(let error):
-                self.sendErrorResponse(id: request.id, error: error)
-            }
+        Task.detached {
+//            do {
+//                try await tool.handle(params: request.params)
+//            } catch {
+//                print(error)
+//            }
         }
+        
+//        { result in
+//           switch result {
+//           case .success(let resultData):
+//               self.sendSuccessResponse(id: request.id, result: resultData)
+//           case .failure(let error):
+//               self.sendErrorResponse(id: request.id, error: error)
+//           }
+//       }
     }
     
     /// Send a success response
