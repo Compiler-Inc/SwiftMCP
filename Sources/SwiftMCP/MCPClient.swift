@@ -24,7 +24,7 @@ public class MCPClient {
         self.toolRegistry = toolRegistry
         self.responseHandler = responseHandler
     }
-    
+
     /// Handle an incoming JSON-RPC message
     /// - Parameter data: Raw JSON data containing the request
     public func handleIncomingMessage(data: Data) async throws {
@@ -37,17 +37,14 @@ public class MCPClient {
                 return
             }
             
-            do {
-                let result = try await tool.handle(params: request.params)
-                try sendSuccessResponse(id: request.id, result: result)
-            } catch {
-                try sendErrorResponse(id: request.id, error: .toolError(error.localizedDescription))
-            }
+            let result = try await tool.handle(params: request.params)
+            try sendSuccessResponse(id: request.id, result: result)
         } catch {
-            // If decoding fails, attempt to get the ID from raw JSON
             let rawJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
             let id = (rawJson?["id"] as? String) ?? "null"
-            try sendErrorResponse(id: id, error: .invalidRequest("Invalid JSON-RPC request format"))
+            let error = MCPError.invalidRequest("Invalid JSON-RPC request format")
+            try sendErrorResponse(id: id, error: error)
+            throw error
         }
     }
     

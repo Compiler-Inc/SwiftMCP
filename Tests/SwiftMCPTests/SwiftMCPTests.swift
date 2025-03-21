@@ -71,12 +71,15 @@ final class SwiftMCPTests: XCTestCase {
         
         let data = try JSONEncoder().encode(request)
         
-        try await client.handleIncomingMessage(data: data)
-        
-        XCTAssertEqual(responses.count, 1)
-        XCTAssertTrue(responses[0].contains("\"error\""))
-        XCTAssertTrue(responses[0].contains("Invalid JSON-RPC request format"))
-        XCTAssertTrue(responses[0].contains("\"id\":\"test-id\""))
+        do {
+            try await client.handleIncomingMessage(data: data)
+            XCTFail("Parsed invalid JSON RPC request")
+        } catch {
+            XCTAssertEqual(responses.count, 1)
+            XCTAssertTrue(responses[0].contains("\"error\""))
+            XCTAssertTrue(responses[0].contains("Invalid JSON-RPC request format"))
+            XCTAssertTrue(responses[0].contains("\"id\":\"test-id\""))
+        }
     }
     
     func testMethodNotFound() async throws {
