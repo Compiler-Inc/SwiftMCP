@@ -11,7 +11,7 @@ import HealthKit
 /// Represents the various types of health data that can be queried through HealthKit
 @available(iOS 15, macOS 13.0, *)
 public enum HealthDataType: String, Codable {
-    // Activity metrics (existing)
+    // Activity metrics
     case stepCount = "stepCount"
     case distanceWalkingRunning = "distanceWalkingRunning"
     case activeEnergyBurned = "activeEnergyBurned"
@@ -20,40 +20,34 @@ public enum HealthDataType: String, Codable {
     case appleExerciseTime = "appleExerciseTime"
     case appleMoveTime = "appleMoveTime"
     case appleStandTime = "appleStandTime"
-    
-    // Added new activity metrics
     case distanceCycling = "distanceCycling"
     case distanceSwimming = "distanceSwimming"
     case vo2Max = "vo2Max"
     
-    // Body measurements (existing)
+    // Body measurements
     case height = "height"
     case bodyMass = "bodyMass"
     case bodyMassIndex = "bodyMassIndex"
     case bodyFatPercentage = "bodyFatPercentage"
-    
-    // Added new body measurements
     case leanBodyMass = "leanBodyMass"
     case waistCircumference = "waistCircumference"
     
-    // Vital signs (existing)
+    // Vital signs
     case heartRate = "heartRate"
     case restingHeartRate = "restingHeartRate"
     case oxygenSaturation = "oxygenSaturation"
     case bloodPressureDiastolic = "bloodPressureDiastolic"
     case bloodPressureSystolic = "bloodPressureSystolic"
     case respiratoryRate = "respiratoryRate"
-    
-    // Added new vital signs
     case walkingHeartRateAverage = "walkingHeartRateAverage"
     case heartRateVariabilitySDNN = "heartRateVariabilitySDNN"
     case bodyTemperature = "bodyTemperature"
     
-    // Added new category: Lab and test results
+    // Lab and test results
     case bloodGlucose = "bloodGlucose"
     case insulinDelivery = "insulinDelivery"
     
-    // Added new category: Mobility
+    // Mobility
     case walkingSpeed = "walkingSpeed"
     case walkingStepLength = "walkingStepLength"
     case sixMinuteWalkTestDistance = "sixMinuteWalkTestDistance"
