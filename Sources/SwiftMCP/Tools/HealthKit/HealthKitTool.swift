@@ -16,13 +16,19 @@ public class HealthKitTool: MCPTool {
     
     private let healthStore: HKHealthStore
     
+    /// Initialize the HealthKit tool with a custom health store
+    /// - Parameter healthStore: The HKHealthStore to use (useful for testing)
+    public init(healthStore: HKHealthStore) {
+        self.healthStore = healthStore
+    }
+    
     /// Initialize the HealthKit tool
     /// - Throws: MCPError if HealthKit is not available on the device
-    public init() throws {
+    public convenience init() throws {
         guard HKHealthStore.isHealthDataAvailable() else {
             throw MCPError.toolError("HealthKit is not available on this device")
         }
-        self.healthStore = HKHealthStore()
+        self.init(healthStore: HKHealthStore())
     }
     
     /// Handle incoming requests for health data
@@ -38,31 +44,31 @@ public class HealthKitTool: MCPTool {
     ///       - workoutType: Optional string specifying the type of workout to filter by
     ///       - includeRoutes: Optional boolean indicating whether to include route data
     ///       - timeRange/duration: Same as getData
-    public func handle(params: [String: Any]) async throws -> [String: Any] {
-        guard let action = params["action"] as? String else {
+    public func handle(params: [String : JSON]) async throws -> [String : JSON] {
+        guard let action = params["action"], case .string(let actionStr) = action else {
             throw MCPError.invalidParams("Missing 'action' parameter")
         }
         
-        switch action {
+        switch actionStr {
         case "getData":
             return try await handleGetData(params: params)
         case "getWorkouts":
             return try await handleGetWorkouts(params: params)
         default:
-            throw MCPError.invalidParams("Invalid action: \(action)")
+            throw MCPError.invalidParams("Invalid action: \(actionStr)")
         }
     }
     
     /// Handle getData requests
-    private func handleGetData(params: [String: Any]) async throws -> [String: Any] {
+    private func handleGetData(params: [String: JSON]) async throws -> [String: JSON] {
         // Validate and parse data type
-        guard let dataTypeStr = params["dataType"] as? String,
+        guard case .string(let dataTypeStr) = params["dataType"] ?? .null,
               let dataType = HealthDataType(rawValue: dataTypeStr) else {
             throw MCPError.invalidParams("Invalid or missing dataType parameter")
         }
         
-        let timeRange = params["timeRange"] as? String
-        let duration = params["duration"] as? String
+        let timeRange = params["timeRange"].flatMap { if case .string(let str) = $0 { return str } else { return nil } }
+        let duration = params["duration"].flatMap { if case .string(let str) = $0 { return str } else { return nil } }
         
         // Calculate date range
         let (startDate, endDate) = calculateDateRange(timeRange: timeRange, duration: duration)
@@ -80,21 +86,23 @@ public class HealthKitTool: MCPTool {
         )
         
         return [
-            "dataType": dataType.rawValue,
-            "unit": dataType.unit.unitString,
-            "samples": samples.map { [
-                "value": $0.value,
-                "date": ISO8601DateFormatter().string(from: $0.date)
-            ]}
+            "dataType": .string(dataType.rawValue),
+            "unit": .string(dataType.unit.unitString),
+            "samples": .array(samples.map { sample in
+                .object([
+                    "value": .number(sample.value),
+                    "date": .string(ISO8601DateFormatter().string(from: sample.date))
+                ])
+            })
         ]
     }
     
     /// Handle getWorkouts requests
-    private func handleGetWorkouts(params: [String: Any]) async throws -> [String: Any] {
-        let timeRange = params["timeRange"] as? String
-        let duration = params["duration"] as? String
-        let workoutType = params["workoutType"] as? String
-        let includeRoutes = params["includeRoutes"] as? Bool ?? false
+    private func handleGetWorkouts(params: [String: JSON]) async throws -> [String: JSON] {
+        let timeRange = params["timeRange"].flatMap { if case .string(let str) = $0 { return str } else { return nil } }
+        let duration = params["duration"].flatMap { if case .string(let str) = $0 { return str } else { return nil } }
+        let workoutType = params["workoutType"].flatMap { if case .string(let str) = $0 { return str } else { return nil } }
+        let includeRoutes = params["includeRoutes"].flatMap { if case .bool(let val) = $0 { return val } else { return nil } } ?? false
         
         // Calculate date range
         let (startDate, endDate) = calculateDateRange(timeRange: timeRange, duration: duration)
@@ -140,35 +148,35 @@ public class HealthKitTool: MCPTool {
         
         // Convert workouts to dictionary format
         return [
-            "workouts": workoutSamples.map { workout in
-                var workoutDict: [String: Any] = [
-                    "type": workout.workoutActivityType,
-                    "startDate": ISO8601DateFormatter().string(from: workout.startDate),
-                    "endDate": ISO8601DateFormatter().string(from: workout.endDate),
-                    "duration": workout.duration
+            "workouts": .array(workoutSamples.map { workout in
+                var workoutDict: [String: JSON] = [
+                    "type": .string(workout.workoutActivityType),
+                    "startDate": .string(ISO8601DateFormatter().string(from: workout.startDate)),
+                    "endDate": .string(ISO8601DateFormatter().string(from: workout.endDate)),
+                    "duration": .number(workout.duration)
                 ]
                 
                 if let distance = workout.totalDistance {
-                    workoutDict["distance"] = distance
+                    workoutDict["distance"] = .number(distance)
                 }
                 
                 if let calories = workout.totalEnergyBurned {
-                    workoutDict["calories"] = calories
+                    workoutDict["calories"] = .number(calories)
                 }
                 
                 if let route = workout.route {
-                    workoutDict["route"] = route.map { coordinate in
-                        [
-                            "latitude": coordinate.latitude,
-                            "longitude": coordinate.longitude,
-                            "altitude": coordinate.altitude,
-                            "timestamp": ISO8601DateFormatter().string(from: coordinate.timestamp)
-                        ]
-                    }
+                    workoutDict["route"] = .array(route.map { coordinate in
+                        .object([
+                            "latitude": .number(coordinate.latitude),
+                            "longitude": .number(coordinate.longitude),
+                            "altitude": .number(coordinate.altitude),
+                            "timestamp": .string(ISO8601DateFormatter().string(from: coordinate.timestamp))
+                        ])
+                    })
                 }
                 
-                return workoutDict
-            }
+                return .object(workoutDict)
+            })
         ]
     }
     
@@ -256,24 +264,24 @@ public class HealthKitTool: MCPTool {
         if let timeRange = timeRange?.lowercased() {
             switch timeRange {
             case "today":
-                startDate = Calendar.current.startOfDay(for: now)
+            startDate = Calendar.current.startOfDay(for: now)
             case "yesterday":
-                let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now)!
-                startDate = Calendar.current.startOfDay(for: yesterday)
+            let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: now)!
+            startDate = Calendar.current.startOfDay(for: yesterday)
             case "this_week":
-                startDate = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now))
+            startDate = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now))
             case "last_week":
-                if let thisWeekStart = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)) {
-                    startDate = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: thisWeekStart)
-                }
+            if let thisWeekStart = Calendar.current.date(from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)) {
+            startDate = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: thisWeekStart)
+            }
             case "this_month":
-                startDate = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: now))
+            startDate = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: now))
             case "last_month":
-                if let thisMonthStart = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: now)) {
-                    startDate = Calendar.current.date(byAdding: .month, value: -1, to: thisMonthStart)
-                }
+            if let thisMonthStart = Calendar.current.date(from: Calendar.current.dateComponents([.year, .month], from: now)) {
+            startDate = Calendar.current.date(byAdding: .month, value: -1, to: thisMonthStart)
+            }
             default:
-                break
+            break
             }
         } else if let duration = duration {
             // Parse ISO 8601 duration format (e.g., P1D, P7D, P1M, P1Y)

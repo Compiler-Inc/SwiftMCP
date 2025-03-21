@@ -102,15 +102,13 @@ public class OpenAIBridge {
         return OpenAIFunction(function: functionDef)
     }
     
-    /// Convert OpenAI tool calls to MCP format
-    /// - Parameter toolCall: The OpenAI tool call
-    /// - Returns: A tuple containing the MCP tool name and parameters
-    public func convertToMCPCall(_ toolCall: ToolCall) throws -> (name: String, params: [String: Any]) {
-        guard let data = toolCall.function.arguments.data(using: .utf8),
-              let params = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+    // Updated OpenAI tool call conversion to use JSON
+    public func convertToMCPCall(_ toolCall: ToolCall) throws -> (name: String, params: [String: JSON]) {
+        guard let data = toolCall.function.arguments.data(using: .utf8) else {
             throw MCPError.toolError("Invalid tool call arguments")
         }
         
+        let params = try JSONDecoder().decode([String: JSON].self, from: data)
         return (name: toolCall.function.name, params: params)
     }
     
@@ -119,9 +117,9 @@ public class OpenAIBridge {
     ///   - response: The MCP tool response
     ///   - toolCallId: The OpenAI tool call ID
     /// - Returns: The formatted tool response
-    public func convertToOpenAIResponse(_ response: Any, toolCallId: String) -> [String: String] {
+    public func convertToOpenAIResponse(_ response: [String: JSON], toolCallId: String) -> [String: String] {
         let content: String
-        if let jsonData = try? JSONSerialization.data(withJSONObject: response),
+        if let jsonData = try? JSONEncoder().encode(response),
            let jsonString = String(data: jsonData, encoding: .utf8) {
             content = jsonString
         } else {

@@ -11,6 +11,7 @@ final class SwiftMCPTests: XCTestCase {
         registry = ToolRegistry()
         responses = []
         client = MCPClient(toolRegistry: registry) { [weak self] response in
+            print("got response: \(response)")
             self?.responses.append(response)
         }
     }
@@ -24,7 +25,7 @@ final class SwiftMCPTests: XCTestCase {
     
     // MARK: - Tool Registry Tests
     
-    func testToolRegistration() {
+    func testToolRegistration() async throws {
         let mockTool = MockTool(methodName: "test/mock")
         registry.register(tool: mockTool)
         
@@ -32,7 +33,7 @@ final class SwiftMCPTests: XCTestCase {
         XCTAssertNil(registry.tool(for: "nonexistent/method"))
     }
     
-    func testToolUnregistration() {
+    func testToolUnregistration() async throws {
         let mockTool = MockTool(methodName: "test/mock")
         registry.register(tool: mockTool)
         registry.unregister(methodName: "test/mock")
@@ -42,63 +43,57 @@ final class SwiftMCPTests: XCTestCase {
     
     // MARK: - MCPClient Tests
     
-    func testValidJSONRPCRequest() {
+    func testValidJSONRPCRequest() async throws {
         let mockTool = MockTool(methodName: "test/mock")
         registry.register(tool: mockTool)
         
-        let request: [String: Any] = [
-            "jsonrpc": "2.0",
-            "method": "test/mock",
-            "params": ["key": "value"],
-            "id": "1"
+        let request: [String: JSON] = [
+            "jsonrpc": .string("2.0"),
+            "method": .string("test/mock"),
+            "params": .object(["key": .string("value")]),
+            "id": .string("1")
         ]
         
-        guard let data = try? JSONSerialization.data(withJSONObject: request) else {
-            XCTFail("Failed to serialize request")
-            return
-        }
+        let data = try JSONEncoder().encode(request)
         
-        client.handleIncomingMessage(data: data)
-        
+        try await client.handleIncomingMessage(data: data)
         XCTAssertEqual(responses.count, 1)
         XCTAssertTrue(responses[0].contains("\"result\""))
         XCTAssertTrue(responses[0].contains("\"id\":\"1\""))
     }
     
-    func testInvalidJSONRPCRequest() {
-        let request: [String: Any] = [
-            "invalid": "request"
+    func testInvalidJSONRPCRequest() async throws {
+        // Send an invalid request that's missing required fields
+        let request: [String: JSON] = [
+            "invalid": .string("request"),
+            "id": .string("test-id")
         ]
         
-        guard let data = try? JSONSerialization.data(withJSONObject: request) else {
-            XCTFail("Failed to serialize request")
-            return
-        }
+        let data = try JSONEncoder().encode(request)
         
-        client.handleIncomingMessage(data: data)
+        try await client.handleIncomingMessage(data: data)
         
         XCTAssertEqual(responses.count, 1)
         XCTAssertTrue(responses[0].contains("\"error\""))
+        XCTAssertTrue(responses[0].contains("Invalid JSON-RPC request format"))
+        XCTAssertTrue(responses[0].contains("\"id\":\"test-id\""))
     }
     
-    func testMethodNotFound() {
-        let request: [String: Any] = [
-            "jsonrpc": "2.0",
-            "method": "nonexistent/method",
-            "params": [:],
-            "id": "1"
+    func testMethodNotFound() async throws {
+        let request: [String: JSON] = [
+            "jsonrpc": .string("2.0"),
+            "method": .string("nonexistent/method"),
+            "params": .object([:]),
+            "id": .string("1")
         ]
         
-        guard let data = try? JSONSerialization.data(withJSONObject: request) else {
-            XCTFail("Failed to serialize request")
-            return
-        }
+        let data = try JSONEncoder().encode(request)
         
-        client.handleIncomingMessage(data: data)
+        try await client.handleIncomingMessage(data: data)
         
         XCTAssertEqual(responses.count, 1)
         XCTAssertTrue(responses[0].contains("\"error\""))
-        XCTAssertTrue(responses[0].contains("Tool not found"))
+        XCTAssertTrue(responses[0].contains("The requested tool was not found in the registry"))
     }
 }
 
@@ -111,7 +106,10 @@ private class MockTool: MCPTool {
         self.methodName = methodName
     }
     
-    func handle(params: [String : Any], completion: @escaping (Result<Any, MCPError>) -> Void) {
-        completion(.success(["status": "success", "params": params]))
+    func handle(params: [String: JSON]) async throws -> [String: JSON] {
+        return [
+            "status": .string("success"),
+            "params": .object(params)
+        ]
     }
 }

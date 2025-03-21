@@ -29,63 +29,57 @@ public class MCPClient {
     /// - Parameter data: Raw JSON data containing the request
     public func handleIncomingMessage(data: Data) async throws {
         do {
-            // Use JSONDecoder to decode the request
             let request = try JSONDecoder().decode(JSONRPCRequest.self, from: data)
-            let result = try await handleRequest(request)
-            sendSuccessResponse(id: request.id, result: result)
+            
+            // Lookup the tool associated with the method
+            guard let tool = toolRegistry.tool(for: request.method) else {
+                try sendErrorResponse(id: request.id, error: .toolNotFound)
+                return
+            }
+            
+            do {
+                let result = try await tool.handle(params: request.params)
+                try sendSuccessResponse(id: request.id, result: result)
+            } catch {
+                try sendErrorResponse(id: request.id, error: .toolError(error.localizedDescription))
+            }
         } catch {
             // If decoding fails, attempt to get the ID from raw JSON
-            if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                sendErrorResponse(id: json["id"] as? String, error: .invalidParams("Invalid JSON format"))
-            } else {
-                sendErrorResponse(id: nil, error: .invalidParams("Invalid JSON format"))
-            }
+            let rawJson = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let id = (rawJson?["id"] as? String) ?? "null"
+            try sendErrorResponse(id: id, error: .invalidRequest("Invalid JSON-RPC request format"))
         }
-    }
-    
-    /// Handle a parsed JSON-RPC request
-    private func handleRequest(_ request: JSONRPCRequest) async throws -> [String: Any] {
-        // Lookup the tool associated with the method
-        guard let tool = toolRegistry.tool(for: request.method) else {
-            sendErrorResponse(id: request.id, error: .toolNotFound)
-            return [:]
-        }
-        
-        return try await tool.handle(params: request.params)
     }
     
     /// Send a success response
-    private func sendSuccessResponse(id: String, result: Any) {
-        let response: [String: Any] = [
-            "jsonrpc": "2.0",
-            "id": id,
-            "result": result
+    private func sendSuccessResponse(id: String, result: [String: JSON]) throws {
+        let response: [String: JSON] = [
+            "jsonrpc": .string("2.0"),
+            "id": .string(id),
+            "result": .object(result)
         ]
-        sendResponse(response)
+        try sendResponse(response)
     }
     
     /// Send an error response
-    private func sendErrorResponse(id: String?, error: MCPError) {
-        let response: [String: Any] = [
-            "jsonrpc": "2.0",
-            "id": id ?? "null",
-            "error": [
-                "code": error.jsonRpcCode,
-                "message": error.description
-            ]
+    private func sendErrorResponse(id: String?, error: MCPError) throws {
+        let response: [String: JSON] = [
+            "jsonrpc": .string("2.0"),
+            "id": .string(id ?? "null"),
+            "error": .object([
+                "code": .number(Double(error.jsonRpcCode)),
+                "message": .string(error.description)
+            ])
         ]
-        sendResponse(response)
+        try sendResponse(response)
     }
     
     /// Serialize and send a response via the response handler
-    private func sendResponse(_ response: [String: Any]) {
-        do {
-            let data = try JSONSerialization.data(withJSONObject: response, options: [.prettyPrinted])
-            if let jsonString = String(data: data, encoding: .utf8) {
-                responseHandler(jsonString)
-            }
-        } catch {
-            print("Error serializing response: \(error)")
+    private func sendResponse(_ response: [String: JSON]) throws {
+        let jsonData = try JSONEncoder().encode(response)
+        guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+            throw MCPError.invalidParams("Failed to serialize response to JSON")
         }
+        responseHandler(jsonString)
     }
 }

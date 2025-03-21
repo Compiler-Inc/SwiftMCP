@@ -1,6 +1,6 @@
 # SwiftMCP
 
-A Swift Package that implements an MCP (Machine Control Protocol) client for iOS and macOS, enabling native API integration through a JSON-RPC interface. The package also includes an OpenAI-compatible function calling bridge.
+A Swift Package that implements an MCP (Model Context Protocol) client for iOS and macOS, enabling native API integration through a JSON-RPC interface. The package also includes an OpenAI-compatible function calling bridge.
 
 ## Features
 
