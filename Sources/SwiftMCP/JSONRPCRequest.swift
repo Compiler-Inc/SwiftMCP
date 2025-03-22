@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  JSONRPCRequest.swift
 //  SwiftMCP
 //
 //  Created by Atharva Vaidya on 3/20/25.
