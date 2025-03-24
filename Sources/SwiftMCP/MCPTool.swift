@@ -17,6 +17,10 @@ public protocol MCPTool: Sendable {
     /// for example "healthKit/getSteps" or "location/getCurrentPosition".
     var methodName: String { get }
     
+    
+    /// The JSON schema for the tool's definition in OpenAI's chat completion format.
+    var toolSchema: String { get }
+    
     /// Handle the incoming JSON-RPC call.
     /// - Parameters:
     ///   - params: The JSON-RPC parameters as a dictionary of JSON values

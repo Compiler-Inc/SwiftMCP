@@ -371,6 +371,154 @@ public final class HealthKitTool: MCPTool {
     }
 }
 
+extension HealthKitTool {
+    public var toolSchema: String {
+        """
+        {
+          "type": "function",
+          "function": {
+            "name": "healthkit",
+            "description": "Access HealthKit data including health metrics and workouts. Use the 'action' parameter to specify whether to fetch health data or workout data.",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "enum": ["getData", "getWorkouts"],
+                  "description": "The action to perform: 'getData' for health metrics or 'getWorkouts' for workout data"
+                },
+                "dataType": {
+                  "type": "string",
+                  "enum": [
+                    "stepCount",
+                    "distanceWalkingRunning",
+                    "runningGroundContactTime",
+                    "runningPower",
+                    "runningSpeed",
+                    "runningStrideLength",
+                    "runningVerticalOscillation",
+                    "distanceCycling",
+                    "pushCount",
+                    "distanceWheelchair",
+                    "swimmingStrokeCount",
+                    "distanceSwimming",
+                    "distanceDownhillSnowSports",
+                    "basalEnergyBurned",
+                    "activeEnergyBurned",
+                    "flightsClimbed",
+                    "nikeFuel",
+                    "appleExerciseTime",
+                    "appleMoveTime",
+                    "appleStandTime",
+                    "vo2Max",
+                    "height",
+                    "bodyMass",
+                    "bodyMassIndex",
+                    "leanBodyMass",
+                    "bodyFatPercentage",
+                    "waistCircumference",
+                    "appleSleepingWristTemperature",
+                    "basalBodyTemperature",
+                    "environmentalAudioExposure",
+                    "headphoneAudioExposure",
+                    "heartRate",
+                    "restingHeartRate",
+                    "walkingHeartRateAverage",
+                    "heartRateVariabilitySDNN",
+                    "heartRateRecoveryOneMinute",
+                    "atrialFibrillationBurden",
+                    "oxygenSaturation",
+                    "bodyTemperature",
+                    "bloodPressureDiastolic",
+                    "bloodPressureSystolic",
+                    "respiratoryRate",
+                    "bloodGlucose",
+                    "electrodermalActivity",
+                    "forcedExpiratoryVolume1",
+                    "forcedVitalCapacity",
+                    "inhalerUsage",
+                    "insulinDelivery",
+                    "numberOfTimesFallen",
+                    "peakExpiratoryFlowRate",
+                    "peripheralPerfusionIndex"
+                  ],
+                  "description": "The type of health data to retrieve. Required when action is 'getData'."
+                },
+                "workoutType": {
+                  "type": "string",
+                  "enum": [
+                    "running",
+                    "cycling",
+                    "walking",
+                    "swimming",
+                    "hiking",
+                    "yoga",
+                    "strength_training",
+                    "cross_training",
+                    "mixed_cardio",
+                    "hiit",
+                    "rowing",
+                    "elliptical",
+                    "stair_climbing",
+                    "pilates",
+                    "dance",
+                    "cooldown",
+                    "american_football",
+                    "baseball",
+                    "basketball",
+                    "boxing",
+                    "climbing",
+                    "golf",
+                    "hockey",
+                    "soccer",
+                    "tennis",
+                    "volleyball",
+                    "water_fitness",
+                    "other"
+                  ],
+                  "description": "The type of workout to filter by. Optional when action is 'getWorkouts'."
+                },
+                "includeRoutes": {
+                  "type": "boolean",
+                  "description": "Whether to include route data for workouts. Only applicable when action is 'getWorkouts'."
+                },
+                "timeRange": {
+                  "type": "string",
+                  "enum": [
+                    "today",
+                    "yesterday",
+                    "this_week",
+                    "last_week",
+                    "this_month",
+                    "last_month"
+                  ],
+                  "description": "A canonical label representing a fixed calendar period. Should not be used simultaneously with duration."
+                },
+                "duration": {
+                  "type": "string",
+                  "pattern": "^P\\d+[DWMY]$",
+                  "description": "An ISO 8601 duration string (e.g., 'P7D' for 7 days, 'P2W' for 2 weeks). Should not be used simultaneously with timeRange."
+                }
+              },
+              "required": ["action"],
+              "allOf": [
+                {
+                  "if": {
+                    "properties": { "action": { "const": "getData" } }
+                  },
+                  "then": {
+                    "required": ["dataType"]
+                  }
+                }
+              ],
+              "additionalProperties": false
+            }
+          }
+        }
+        """
+    }
+}
+
 /// Fetch route data for a workout
 fileprivate actor LocationStore {
     private var locations: [CLLocation] = []
@@ -383,3 +531,4 @@ fileprivate actor LocationStore {
         locations
     }
 }
+

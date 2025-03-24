@@ -19,18 +19,10 @@ public class MLXModelHandler: @unchecked Sendable {
     }
     
     /// Load an MLX model using the model registry
-    /// - Parameters:
-    ///   - modelURL: The file URL to the MLX model directory
-    ///   - parameters: Optional parameters for model configuration
-    public func loadModel(from modelURL: URL, parameters: [String: JSON]? = nil) async throws {
-        let modelConfiguration: ModelConfiguration
-        
-        // Create configuration from local model path
-        modelConfiguration = ModelConfiguration(directory: modelURL)
-        
+    public func loadModel() async throws {
         // Load the model using LLMModelFactory
         modelContainer = try await LLMModelFactory.shared.loadContainer(
-            configuration: modelConfiguration,
+            configuration: LLMRegistry.deepSeekR1_7B_4bit,
             progressHandler: { progress in
                 print("Loading model: \(progress.fractionCompleted * 100)%")
             }

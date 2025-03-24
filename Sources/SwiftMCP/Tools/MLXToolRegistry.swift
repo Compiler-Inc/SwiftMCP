@@ -5,7 +5,6 @@ import MLX
 public class MLXToolRegistry: ToolRegistry {
     private let bridge = MLXBridge()
     private var tools: [String: MCPTool] = [:]
-    private var toolSchemas: [String: String] = [:]
     
     /// Initialize an empty MLX tool registry
     public override init() {}
@@ -14,22 +13,19 @@ public class MLXToolRegistry: ToolRegistry {
     /// - Parameters:
     ///   - tool: The MCP tool to register
     ///   - schema: The JSON schema describing the tool
-    public func registerTool(_ tool: MCPTool, schema: String) {
+    public func registerTool(_ tool: MCPTool) {
         // Store the original tool name
         let originalName = tool.methodName
         let sanitizedName = sanitizeToolName(originalName)
         
         tools[sanitizedName] = tool
-        toolSchemas[sanitizedName] = schema
     }
     
     /// Get all registered tools in MLX function format
     /// - Returns: Array of MLX function definitions as [String: JSON] for MLX Swift format
     public func getMLXFunctions() throws -> [[String: JSON]] {
-        var functions: [[String: JSON]] = []
-        
-        for (_, schema) in toolSchemas {
-            let mlxFunction = try bridge.convertToMLXFunction(schema)
+        try tools.map {
+            let mlxFunction = try bridge.convertToMLXFunction($0.value.toolSchema)
             
             // Convert the MLXFunction to a dictionary
             let function: [String: JSON] = [
@@ -41,10 +37,8 @@ public class MLXToolRegistry: ToolRegistry {
                 ])
             ]
             
-            functions.append(function)
+            return function
         }
-        
-        return functions
     }
     
     /// Process MLX model output to find and execute tool calls
