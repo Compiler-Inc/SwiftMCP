@@ -5,7 +5,7 @@ import MLXLMCommon
 import Hub
 
 /// Handler for managing MLX models with function calling capabilities
-public class MLXModelHandler {
+public class MLXModelHandler: @unchecked Sendable {
     /// The loaded MLX model container
     private var modelContainer: ModelContainer?
     

@@ -11,7 +11,7 @@ import CoreLocation
 
 /// A tool that provides access to HealthKit data through the MCP interface
 @available(iOS 15, macOS 13.0, *)
-public class HealthKitTool: MCPTool {
+public class HealthKitTool: MCPTool, @unchecked Sendable {
     public let methodName = "healthKit"
     
     private let healthStore: HKHealthStore
