@@ -12,6 +12,8 @@ public class MLXModelHandler: @unchecked Sendable {
     /// The MLX tool registry for function calling
     private var toolRegistry: MLXToolRegistry
     
+    private var lock = NSLock()
+    
     /// Initialize the MLX model handler with a tool registry
     /// - Parameter toolRegistry: The MLX tool registry for function calling
     public init(toolRegistry: MLXToolRegistry) {
@@ -85,6 +87,39 @@ public class MLXModelHandler: @unchecked Sendable {
             }
             
             return result.output // Return the output string from GenerateResult
+        }
+    }
+    
+    public func generate(
+        messages: [[String: any Sendable]],
+        onProgress: @escaping @Sendable (String) -> Void
+    ) async throws -> GenerateResult? {
+        guard let modelContainer else { return nil }
+        
+        return try await modelContainer.perform { context in
+            let input = try await context.processor.prepare(
+                input: .init(messages: messages, tools: [])
+            )
+            
+            let generateParams = GenerateParameters(
+                temperature: 0.7
+            )
+            
+            return try MLXLMCommon.generate(
+                input: input,
+                parameters: generateParams,
+                context: context
+            ) { [unowned self] tokens in
+                if tokens.count % 1 == 0 {
+                    self.lock.lock()
+                    defer { self.lock.unlock() }
+                    let text = context.tokenizer.decode(tokens: tokens)
+                    Task { @MainActor in
+                        onProgress(text)
+                    }
+                }
+                return .more
+            }
         }
     }
 }
