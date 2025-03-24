@@ -49,7 +49,7 @@ public class MLXModelHandler: @unchecked Sendable {
         )
         
         // Get tools from registry
-        let functions = try toolRegistry.getMLXFunctions()
+//        let functions = try toolRegistry.getMLXFunctions()
         
         // Create input and generate using MLX's perform method
         return try await modelContainer.perform { context in
@@ -67,7 +67,7 @@ public class MLXModelHandler: @unchecked Sendable {
             
             let userInput = UserInput(
                 messages: messages,
-                tools: functions
+                tools: []
             )
             
             let input = try await context.processor.prepare(input: userInput)
