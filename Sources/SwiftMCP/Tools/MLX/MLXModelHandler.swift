@@ -22,7 +22,7 @@ public class MLXModelHandler: @unchecked Sendable {
     public func loadModel() async throws {
         // Load the model using LLMModelFactory
         modelContainer = try await LLMModelFactory.shared.loadContainer(
-            configuration: LLMRegistry.deepSeekR1_7B_4bit,
+            configuration: LLMRegistry.llama3_2_3B_4bit,
             progressHandler: { progress in
                 print("Loading model: \(progress.fractionCompleted * 100)%")
             }
