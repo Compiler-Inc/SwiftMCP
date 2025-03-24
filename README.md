@@ -269,3 +269,119 @@ Any contributions are welcome! Please feel free to submit a PR.
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## MLX Swift Integration
+
+### Overview
+
+SwiftMCP now includes support for function calling (tool use) with MLX models running locally on-device. This feature allows you to leverage the power of local large language models with tool use capabilities without relying on external API services.
+
+### Setup
+
+To use MLX Swift function calling, first add the MLX Swift dependency to your project:
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/compiler-inc/SwiftMCP.git", from: "1.0.0")
+    .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.21.0")
+]
+```
+
+### Basic Usage
+
+This example demonstrates:
+
+1. Setting up the MLX tool registry
+2. Loading and initializing an MLX model
+3. Registering tools with the MLX bridge
+4. Generating text with tool calling capabilities
+
+```swift
+import SwiftMCP
+import MLX
+
+// 1. Set up MLX Tool Registry
+let mlxRegistry = MLXToolRegistry()
+
+// 2. Register tools
+let weatherTool = WeatherTool()
+mlxRegistry.registerTool(weatherTool, schema: WeatherTool.getJSONSchema())
+
+// 3. Create model handler and load model
+let modelType = MLXModelFactory.detectModelType(from: modelURL)
+let modelHandler = MLXModelFactory.createModelHandler(
+    modelType: modelType,
+    toolRegistry: mlxRegistry
+)
+
+try await modelHandler.loadModel(from: modelURL)
+
+// 4. Generate text with function calling
+let prompt = "What's the weather like in San Francisco?"
+let response = try await modelHandler.generateWithFunctionCalling(
+    prompt: prompt,
+    systemPrompt: "You are a helpful assistant with access to weather information.",
+    parameters: [
+        "temperature": 0.7,
+        "max_tokens": 1024
+    ]
+)
+
+print(response)
+```
+
+### Supported Models
+
+The MLX integration currently supports the following model architectures:
+
+- Mistral (7B, 8x7B)
+- Llama (2, 3)
+- Phi
+
+### Model Loading
+
+Models need to be in the MLX format, which can be obtained by converting models from Hugging Face using the MLX conversion tools. For detailed instructions, visit the [MLX repository](https://github.com/ml-explore/mlx-swift).
+
+### Creating Custom Tools for MLX Models
+
+Creating tools for MLX models follows the same pattern as other tools in SwiftMCP:
+
+```swift
+class CustomTool: MCPTool {
+    let methodName = "custom/method"
+
+    func handle(params: [String: JSON]) async throws -> [String: JSON] {
+        // Implement your custom functionality here
+        return [
+            "status": .string("success"),
+            "result": .object(["data": .string("your data here")])
+        ]
+    }
+
+    static func getJSONSchema() -> String {
+        return """
+        {
+            "type": "function",
+            "function": {
+                "name": "custom_method",
+                "description": "Performs a custom operation",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "param1": {
+                            "type": "string",
+                            "description": "First parameter"
+                        },
+                        "param2": {
+                            "type": "number",
+                            "description": "Second parameter"
+                        }
+                    },
+                    "required": ["param1"]
+                }
+            }
+        }
+        """
+    }
+}
+```

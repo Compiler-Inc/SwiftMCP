@@ -1,7 +1,7 @@
 import Foundation
 
 /// Represents a JSON value
-public enum JSON: Codable, Equatable {
+public enum JSON: Codable, Equatable, Sendable {
     case string(String)
     case int(Int)
     case number(Double)

@@ -380,6 +380,6 @@ fileprivate actor LocationStore {
     }
     
     func getAllLocations() -> [CLLocation] {
-        return locations
+        locations
     }
 }

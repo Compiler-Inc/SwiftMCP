@@ -65,7 +65,7 @@ extension HKWorkoutActivityType {
             .elliptical,
             .stairClimbing,
             .pilates,
-            .dance,
+            .cardioDance,
             .cooldown,
             .americanFootball,
             .baseball,
