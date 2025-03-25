@@ -1,3 +1,5 @@
+// Code from https://github.com/kunal732/MLX-Model-Manager
+
 import Foundation
 import MLX
 import MLXFast

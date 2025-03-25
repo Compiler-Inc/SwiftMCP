@@ -1,5 +1,6 @@
 // ModelFactory.swift
 // Unified Model Factory merging LLM and VLM logic
+// Code from https://github.com/kunal732/MLX-Model-Manager
 
 import Foundation
 import Hub
