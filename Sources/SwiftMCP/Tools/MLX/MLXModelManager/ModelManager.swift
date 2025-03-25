@@ -6,6 +6,7 @@ import SwiftUI
 import CoreImage
 import MLX
 import MLXLMCommon
+import MLXLLM
 import Tokenizers
 import Hub
 
@@ -16,15 +17,12 @@ public final class ModelManager: ObservableObject, @unchecked Sendable {
     @Published public var isGenerating: Bool = false
 
     public var maxTokens: Int?
-    private let modelPath: String
     public private(set) var container: ModelContext?
     private var temperature: Float = 0.7
     private var topP: Float = 0.9
     private var repetitionPenalty: Float = 1.0
 
-    public init(modelPath: String) {
-        self.modelPath = modelPath
-    }
+    public init() {}
 
     public func setHyperparameters(temperature: Float?, topP: Float?, repetitionPenalty: Float?) {
         if let temp = temperature { self.temperature = temp }
@@ -41,7 +39,7 @@ public final class ModelManager: ObservableObject, @unchecked Sendable {
         }
         
         do {
-            let configuration = ModelConfiguration(id: modelPath)
+            let configuration = LLMRegistry.llama3_2_1B_4bit//ModelConfiguration(id: modelPath)
             let hub = HubApi()
             let ctx = try await ModelFactory.shared.load(
                 hub: hub,
