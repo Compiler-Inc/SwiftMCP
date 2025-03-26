@@ -12,46 +12,46 @@ import HealthKit
 @available(iOS 15, macOS 13.0, *)
 public enum HealthDataType: String, Codable {
     // Activity metrics
-    case stepCount = "stepCount"
-    case distanceWalkingRunning = "distanceWalkingRunning"
-    case activeEnergyBurned = "activeEnergyBurned"
-    case basalEnergyBurned = "basalEnergyBurned"
-    case flightsClimbed = "flightsClimbed"
-    case appleExerciseTime = "appleExerciseTime"
-    case appleMoveTime = "appleMoveTime"
-    case appleStandTime = "appleStandTime"
-    case distanceCycling = "distanceCycling"
-    case distanceSwimming = "distanceSwimming"
-    case vo2Max = "vo2Max"
-    
+    case stepCount
+    case distanceWalkingRunning
+    case activeEnergyBurned
+    case basalEnergyBurned
+    case flightsClimbed
+    case appleExerciseTime
+    case appleMoveTime
+    case appleStandTime
+    case distanceCycling
+    case distanceSwimming
+    case vo2Max
+
     // Body measurements
-    case height = "height"
-    case bodyMass = "bodyMass"
-    case bodyMassIndex = "bodyMassIndex"
-    case bodyFatPercentage = "bodyFatPercentage"
-    case leanBodyMass = "leanBodyMass"
-    case waistCircumference = "waistCircumference"
-    
+    case height
+    case bodyMass
+    case bodyMassIndex
+    case bodyFatPercentage
+    case leanBodyMass
+    case waistCircumference
+
     // Vital signs
-    case heartRate = "heartRate"
-    case restingHeartRate = "restingHeartRate"
-    case oxygenSaturation = "oxygenSaturation"
-    case bloodPressureDiastolic = "bloodPressureDiastolic"
-    case bloodPressureSystolic = "bloodPressureSystolic"
-    case respiratoryRate = "respiratoryRate"
-    case walkingHeartRateAverage = "walkingHeartRateAverage"
-    case heartRateVariabilitySDNN = "heartRateVariabilitySDNN"
-    case bodyTemperature = "bodyTemperature"
-    
+    case heartRate
+    case restingHeartRate
+    case oxygenSaturation
+    case bloodPressureDiastolic
+    case bloodPressureSystolic
+    case respiratoryRate
+    case walkingHeartRateAverage
+    case heartRateVariabilitySDNN
+    case bodyTemperature
+
     // Lab and test results
-    case bloodGlucose = "bloodGlucose"
-    case insulinDelivery = "insulinDelivery"
-    
+    case bloodGlucose
+    case insulinDelivery
+
     // Mobility
-    case walkingSpeed = "walkingSpeed"
-    case walkingStepLength = "walkingStepLength"
-    case sixMinuteWalkTestDistance = "sixMinuteWalkTestDistance"
-    
+    case walkingSpeed
+    case walkingStepLength
+    case sixMinuteWalkTestDistance
+
     /// Returns the corresponding HKQuantityType for this health data type
     var quantityType: HKQuantityType {
         switch self {
@@ -78,7 +78,6 @@ public enum HealthDataType: String, Codable {
             return HKQuantityType(.distanceSwimming)
         case .vo2Max:
             return HKQuantityType(.vo2Max)
-            
         // Body measurements
         case .height:
             return HKQuantityType(.height)
@@ -92,7 +91,6 @@ public enum HealthDataType: String, Codable {
             return HKQuantityType(.leanBodyMass)
         case .waistCircumference:
             return HKQuantityType(.waistCircumference)
-            
         // Vital signs
         case .heartRate:
             return HKQuantityType(.heartRate)
@@ -112,13 +110,11 @@ public enum HealthDataType: String, Codable {
             return HKQuantityType(.respiratoryRate)
         case .bodyTemperature:
             return HKQuantityType(.bodyTemperature)
-            
         // Lab and test results
         case .bloodGlucose:
             return HKQuantityType(.bloodGlucose)
         case .insulinDelivery:
             return HKQuantityType(.insulinDelivery)
-            
         // Mobility
         case .walkingSpeed:
             return HKQuantityType(.walkingSpeed)
@@ -128,7 +124,7 @@ public enum HealthDataType: String, Codable {
             return HKQuantityType(.sixMinuteWalkTestDistance)
         }
     }
-    
+
     /// Returns the appropriate unit for this health data type
     var unit: HKUnit {
         switch self {
@@ -143,7 +139,6 @@ public enum HealthDataType: String, Codable {
             return .minute()
         case .vo2Max:
             return HKUnit(from: "ml/kg/min")
-            
         // Body measurements
         case .height, .waistCircumference:
             return .meter()
@@ -153,7 +148,6 @@ public enum HealthDataType: String, Codable {
             return .count()
         case .bodyFatPercentage:
             return .percent()
-            
         // Vital signs
         case .heartRate, .restingHeartRate, .walkingHeartRateAverage:
             return .count().unitDivided(by: .minute())
@@ -167,13 +161,11 @@ public enum HealthDataType: String, Codable {
             return .count().unitDivided(by: .minute())
         case .bodyTemperature:
             return .degreeCelsius()
-            
         // Lab and test results
         case .bloodGlucose:
             return HKUnit(from: "mg/dL")
         case .insulinDelivery:
             return .internationalUnit()
-            
         // Mobility
         case .walkingSpeed:
             return .meter().unitDivided(by: .second())

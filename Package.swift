@@ -7,18 +7,19 @@ let package = Package(
     name: "SwiftMCP",
     platforms: [
         .iOS(.v16),
-        .macOS(.v12)
+        .macOS(.v12),
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "SwiftMCP",
-            targets: ["SwiftMCP"]),
+            targets: ["SwiftMCP"]
+        ),
     ],
     dependencies: [
         // Adding MLX Swift dependencies
         .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.21.0"),
-        .package(url: "https://github.com/ml-explore/mlx-swift-examples", branch: "main")
+        .package(url: "https://github.com/ml-explore/mlx-swift-examples", branch: "main"),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -32,7 +33,8 @@ let package = Package(
                 .product(name: "MLXFast", package: "mlx-swift"),
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
-            ]),
+            ]
+        ),
         .testTarget(
             name: "SwiftMCPTests",
             dependencies: ["SwiftMCP"]

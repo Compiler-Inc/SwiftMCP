@@ -1,15 +1,15 @@
 //
-//  File.swift
+//  MLXModelHandler.swift
 //  SwiftMCP
 //
 //  Created by Atharva Vaidya on 3/24/25.
 //
 
 import Foundation
+import Hub
 import MLX
 import MLXLLM
 import MLXLMCommon
-import Hub
 
 /// Handler for managing MLX models with function calling capabilities
 public class MLXModelHandler: @unchecked Sendable {
@@ -42,43 +42,57 @@ public class MLXModelHandler: @unchecked Sendable {
         messages: [[String: any Sendable]],
         onProgress: @escaping @Sendable (String) -> Void
     ) async throws -> GenerateResult? {
-        guard let modelContainer else { return nil }
+        guard let modelContainer = modelContainer else {
+            return nil
+        }
 
-        return try await modelContainer.perform { context in
+        return try await modelContainer.perform { [messages] context in
             let input = try await context.processor.prepare(
-                input: .init(messages: messages, tools: [])
+                input: UserInput(
+                    messages: messages
+                )
             )
-
-            let generateParams = GenerateParameters(
-                temperature: 0.7
-            )
-            
-            var detokenizer = NaiveStreamingDetokenizer(tokenizer: context.tokenizer)
-            var tokenCount = 0
 
             return try MLXLMCommon.generate(
                 input: input,
-                parameters: generateParams,
+                parameters: .init(),
                 context: context
-            ) { [unowned self] tokens in
-                if let last = tokens.last {
-                    self.lock.lock()
-                    defer { self.lock.unlock() }
-                    detokenizer.append(token: last)
-                    tokenCount += 1
+            ) { tokens in
+                let text = context.tokenizer.decode(tokens: tokens)
+                Task { @MainActor in
+                    onProgress(text)
                 }
-                
-                if let decodedToken = detokenizer.next() {
-                    let cleanedToken = decodedToken.replacingOccurrences(of: "Ċ", with: "\n")
-                    Task { @MainActor in
-                        onProgress(cleanedToken)
-                    }
+                return .more
+            }
+        }
+    }
+
+    public func generateWithTools(
+        messages: [[String: any Sendable]],
+        tools: [[String: any Sendable]],
+        onProgress: @escaping @Sendable (String) -> Void
+    ) async throws -> GenerateResult? {
+        guard let modelContainer = modelContainer else {
+            return nil
+        }
+
+        return try await modelContainer.perform { [messages] context in
+            let input = try await context.processor.prepare(
+                input: UserInput(
+                    messages: messages,
+                    tools: tools
+                )
+            )
+
+            return try MLXLMCommon.generate(
+                input: input,
+                parameters: .init(),
+                context: context
+            ) { tokens in
+                let text = context.tokenizer.decode(tokens: tokens)
+                Task { @MainActor in
+                    onProgress(text)
                 }
-                
-                if tokenCount > 1024 {
-                    return .stop
-                }
-                
                 return .more
             }
         }

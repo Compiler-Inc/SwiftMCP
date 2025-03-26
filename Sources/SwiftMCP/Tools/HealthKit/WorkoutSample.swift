@@ -5,42 +5,42 @@
 //  Created by Atharva Vaidya on 3/20/25.
 //
 
+import CoreLocation
 import Foundation
 import HealthKit
-import CoreLocation
 
 /// Represents a workout sample with its metadata and route if available
 @available(iOS 15, macOS 13.0, *)
 public struct WorkoutSample: Codable {
     /// The type of workout (e.g., running, cycling)
     public let workoutActivityType: String
-    
+
     /// The start date of the workout
     public let startDate: Date
-    
+
     /// The end date of the workout
     public let endDate: Date
-    
+
     /// The duration of the workout in seconds
     public let duration: Double
-    
+
     /// The total distance in meters (if available)
     public let totalDistance: Double?
-    
+
     /// The total energy burned in kilocalories (if available)
     public let totalEnergyBurned: Double?
-    
+
     /// The route coordinates if available
     public let route: [LocationCoordinate]?
-    
+
     /// Initialize from an HKWorkout
     init(from workout: HKWorkout, route: [CLLocation]? = nil) {
-        self.workoutActivityType = workout.workoutActivityType.name
-        self.startDate = workout.startDate
-        self.endDate = workout.endDate
-        self.duration = workout.duration
-        self.totalDistance = workout.totalDistance?.doubleValue(for: .meter())
-        self.totalEnergyBurned = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie())
+        workoutActivityType = workout.workoutActivityType.name
+        startDate = workout.startDate
+        endDate = workout.endDate
+        duration = workout.duration
+        totalDistance = workout.totalDistance?.doubleValue(for: .meter())
+        totalEnergyBurned = workout.totalEnergyBurned?.doubleValue(for: .kilocalorie())
         self.route = route?.map { LocationCoordinate(from: $0) }
     }
 }
@@ -78,10 +78,10 @@ extension HKWorkoutActivityType {
             .tennis,
             .volleyball,
             .waterFitness,
-            .other
+            .other,
         ]
     }
-    
+
     /// String representation of the workout type
     var name: String {
         switch self {
@@ -116,4 +116,4 @@ extension HKWorkoutActivityType {
         default: return "other"
         }
     }
-} 
+}

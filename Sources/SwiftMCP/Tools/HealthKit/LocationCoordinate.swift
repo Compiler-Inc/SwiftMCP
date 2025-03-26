@@ -11,21 +11,21 @@ import CoreLocation
 public struct LocationCoordinate: Codable {
     /// Latitude in degrees
     public let latitude: Double
-    
+
     /// Longitude in degrees
     public let longitude: Double
-    
+
     /// Altitude in meters
     public let altitude: Double
-    
+
     /// Timestamp of the coordinate
     public let timestamp: Date
-    
+
     /// Initialize from a CLLocation
     init(from location: CLLocation) {
-        self.latitude = location.coordinate.latitude
-        self.longitude = location.coordinate.longitude
-        self.altitude = location.altitude
-        self.timestamp = location.timestamp
+        latitude = location.coordinate.latitude
+        longitude = location.coordinate.longitude
+        altitude = location.altitude
+        timestamp = location.timestamp
     }
 }
