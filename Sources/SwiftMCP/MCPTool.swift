@@ -19,6 +19,8 @@ public protocol MCPTool: Sendable {
 
     /// The JSON schema for the tool's definition in OpenAI's chat completion format.
     var toolSchema: String { get }
+    
+    var toolSchemaJSON: [String: JSON] { get }
 
     /// Handle the incoming JSON-RPC call.
     /// - Parameters:

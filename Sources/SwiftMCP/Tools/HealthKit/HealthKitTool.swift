@@ -92,9 +92,9 @@ public final class HealthKitTool: MCPTool {
             "samples": .array(samples.map { sample in
                 .object([
                     "value": .number(sample.value),
-                    "date": .string(ISO8601DateFormatter().string(from: sample.date)),
+                    "date": .string(ISO8601DateFormatter().string(from: sample.date))
                 ])
-            }),
+            })
         ]
     }
 
@@ -155,7 +155,7 @@ public final class HealthKitTool: MCPTool {
                     "type": .string(workout.workoutActivityType),
                     "startDate": .string(ISO8601DateFormatter().string(from: workout.startDate)),
                     "endDate": .string(ISO8601DateFormatter().string(from: workout.endDate)),
-                    "duration": .number(workout.duration),
+                    "duration": .number(workout.duration)
                 ]
 
                 if let distance = workout.totalDistance {
@@ -172,13 +172,13 @@ public final class HealthKitTool: MCPTool {
                             "latitude": .number(coordinate.latitude),
                             "longitude": .number(coordinate.longitude),
                             "altitude": .number(coordinate.altitude),
-                            "timestamp": .string(ISO8601DateFormatter().string(from: coordinate.timestamp)),
+                            "timestamp": .string(ISO8601DateFormatter().string(from: coordinate.timestamp))
                         ])
                     })
                 }
 
                 return .object(workoutDict)
-            }),
+            })
         ]
     }
 
@@ -520,6 +520,152 @@ public extension HealthKitTool {
           }
         }
         """
+    }
+
+    var toolSchemaJSON: [String: JSON] {
+        [
+            "type": .string("function"),
+            "function": .object([
+                "name": .string("healthkit"),
+                "description": .string("Access HealthKit data including health metrics and workouts. Use the 'action' parameter to specify whether to fetch health data or workout data."),
+                "parameters": .object([
+                    "type": .string("object"),
+                    "properties": .object([
+                        "action": .object([
+                            "type": .string("string"),
+                            "enum": .array([.string("getData"), .string("getWorkouts")]),
+                            "description": .string("The action to perform: 'getData' for health metrics or 'getWorkouts' for workout data")
+                        ]),
+                        "dataType": .object([
+                            "type": .string("string"),
+                            "enum": .array([
+                                .string("stepCount"),
+                                .string("distanceWalkingRunning"),
+                                .string("runningGroundContactTime"),
+                                .string("runningPower"),
+                                .string("runningSpeed"),
+                                .string("runningStrideLength"),
+                                .string("runningVerticalOscillation"),
+                                .string("distanceCycling"),
+                                .string("pushCount"),
+                                .string("distanceWheelchair"),
+                                .string("swimmingStrokeCount"),
+                                .string("distanceSwimming"),
+                                .string("distanceDownhillSnowSports"),
+                                .string("basalEnergyBurned"),
+                                .string("activeEnergyBurned"),
+                                .string("flightsClimbed"),
+                                .string("nikeFuel"),
+                                .string("appleExerciseTime"),
+                                .string("appleMoveTime"),
+                                .string("appleStandTime"),
+                                .string("vo2Max"),
+                                .string("height"),
+                                .string("bodyMass"),
+                                .string("bodyMassIndex"),
+                                .string("leanBodyMass"),
+                                .string("bodyFatPercentage"),
+                                .string("waistCircumference"),
+                                .string("appleSleepingWristTemperature"),
+                                .string("basalBodyTemperature"),
+                                .string("environmentalAudioExposure"),
+                                .string("headphoneAudioExposure"),
+                                .string("heartRate"),
+                                .string("restingHeartRate"),
+                                .string("walkingHeartRateAverage"),
+                                .string("heartRateVariabilitySDNN"),
+                                .string("heartRateRecoveryOneMinute"),
+                                .string("atrialFibrillationBurden"),
+                                .string("oxygenSaturation"),
+                                .string("bodyTemperature"),
+                                .string("bloodPressureDiastolic"),
+                                .string("bloodPressureSystolic"),
+                                .string("respiratoryRate"),
+                                .string("bloodGlucose"),
+                                .string("electrodermalActivity"),
+                                .string("forcedExpiratoryVolume1"),
+                                .string("forcedVitalCapacity"),
+                                .string("inhalerUsage"),
+                                .string("insulinDelivery"),
+                                .string("numberOfTimesFallen"),
+                                .string("peakExpiratoryFlowRate"),
+                                .string("peripheralPerfusionIndex")
+                            ]),
+                            "description": .string("The type of health data to retrieve. Required when action is 'getData'.")
+                        ]),
+                        "workoutType": .object([
+                            "type": .string("string"),
+                            "enum": .array([
+                                .string("running"),
+                                .string("cycling"),
+                                .string("walking"),
+                                .string("swimming"),
+                                .string("hiking"),
+                                .string("yoga"),
+                                .string("strength_training"),
+                                .string("cross_training"),
+                                .string("mixed_cardio"),
+                                .string("hiit"),
+                                .string("rowing"),
+                                .string("elliptical"),
+                                .string("stair_climbing"),
+                                .string("pilates"),
+                                .string("dance"),
+                                .string("cooldown"),
+                                .string("american_football"),
+                                .string("baseball"),
+                                .string("basketball"),
+                                .string("boxing"),
+                                .string("climbing"),
+                                .string("golf"),
+                                .string("hockey"),
+                                .string("soccer"),
+                                .string("tennis"),
+                                .string("volleyball"),
+                                .string("water_fitness"),
+                                .string("other")
+                            ]),
+                            "description": .string("The type of workout to filter by. Optional when action is 'getWorkouts'.")
+                        ]),
+                        "includeRoutes": .object([
+                            "type": .string("boolean"),
+                            "description": .string("Whether to include route data for workouts. Only applicable when action is 'getWorkouts'.")
+                        ]),
+                        "timeRange": .object([
+                            "type": .string("string"),
+                            "enum": .array([
+                                .string("today"),
+                                .string("yesterday"),
+                                .string("this_week"),
+                                .string("last_week"),
+                                .string("this_month"),
+                                .string("last_month")
+                            ]),
+                            "description": .string("A canonical label representing a fixed calendar period. Should not be used simultaneously with duration.")
+                        ]),
+                        "duration": .object([
+                            "type": .string("string"),
+                            "pattern": .string("^P\\d+[DWMY]$"),
+                            "description": .string("An ISO 8601 duration string (e.g., 'P7D' for 7 days, 'P2W' for 2 weeks). Should not be used simultaneously with timeRange.")
+                        ])
+                    ]),
+                    "required": .array([.string("action")]),
+                    "allOf": .array([
+                        .object([
+                            "if": .object([
+                                "properties": .object([
+                                    "action": .object(["const": .string("getData")])
+                                ])
+                            ]),
+                            "then": .object([
+                                "required": .array([.string("dataType")])
+                            ])
+                        ])
+                    ]),
+                    "additionalProperties": .bool(false)
+                ])
+            ])
+        ]
     }
 }
 
