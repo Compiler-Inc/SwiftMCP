@@ -11,11 +11,11 @@ import Foundation
 public class MCPClient {
     /// The registry containing all available tools
     private let toolRegistry: ToolRegistry
-    
+
     /// Handler for sending responses back to the client
     public typealias ResponseHandler = (String) -> Void
     private let responseHandler: ResponseHandler
-    
+
     /// Initialize a new MCP client
     /// - Parameters:
     ///   - toolRegistry: Registry containing available tools
@@ -30,13 +30,13 @@ public class MCPClient {
     public func handleIncomingMessage(data: Data) async throws {
         do {
             let request = try JSONDecoder().decode(JSONRPCRequest.self, from: data)
-            
+
             // Lookup the tool associated with the method
             guard let tool = toolRegistry.tool(for: request.method) else {
                 try sendErrorResponse(id: request.id, error: .toolNotFound)
                 return
             }
-            
+
             let result = try await tool.handle(params: request.params)
             try sendSuccessResponse(id: request.id, result: result)
         } catch {
@@ -47,17 +47,17 @@ public class MCPClient {
             throw error
         }
     }
-    
+
     /// Send a success response
     private func sendSuccessResponse(id: String, result: [String: JSON]) throws {
         let response: [String: JSON] = [
             "jsonrpc": .string("2.0"),
             "id": .string(id),
-            "result": .object(result)
+            "result": .object(result),
         ]
         try sendResponse(response)
     }
-    
+
     /// Send an error response
     private func sendErrorResponse(id: String?, error: MCPError) throws {
         let response: [String: JSON] = [
@@ -65,12 +65,12 @@ public class MCPClient {
             "id": .string(id ?? "null"),
             "error": .object([
                 "code": .number(Double(error.jsonRpcCode)),
-                "message": .string(error.description)
-            ])
+                "message": .string(error.description),
+            ]),
         ]
         try sendResponse(response)
     }
-    
+
     /// Serialize and send a response via the response handler
     private func sendResponse(_ response: [String: JSON]) throws {
         let jsonData = try JSONEncoder().encode(response)

@@ -12,35 +12,35 @@ import Foundation
 public enum MCPError: Error, CustomStringConvertible {
     /// Indicates that the requested tool was not found in the registry
     case toolNotFound
-    
+
     /// Indicates that the parameters provided in the request were invalid
     case invalidParams(String)
-    
+
     /// Represents tool-specific errors with a message
     case toolError(String)
-    
+
     /// JSON Parsing Error
     case jsonParsingError(Error)
-    
+
     /// Invalid request error with a message
     case invalidRequest(String)
-    
+
     /// Provides human-readable descriptions for each error case
     public var description: String {
         switch self {
         case .toolNotFound:
             return "The requested tool was not found in the registry"
-        case .invalidParams(let message):
+        case let .invalidParams(message):
             return "Invalid parameters: \(message)"
-        case .toolError(let message):
+        case let .toolError(message):
             return "Tool error: \(message)"
-        case .jsonParsingError(let error):
+        case let .jsonParsingError(error):
             return "JSON parsing error: \(error.localizedDescription)"
-        case .invalidRequest(let message):
+        case let .invalidRequest(message):
             return "Invalid request: \(message)"
         }
     }
-    
+
     /// Returns the JSON-RPC error code associated with this error
     var jsonRpcCode: Int {
         switch self {

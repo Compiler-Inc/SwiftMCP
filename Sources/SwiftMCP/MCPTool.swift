@@ -11,12 +11,17 @@ import Foundation
 /// Each tool represents a specific capability that can be invoked via JSON-RPC.
 /// Tools can wrap native iOS APIs, custom functionality, or any other feature
 /// that needs to be exposed through the MCP interface.
-public protocol MCPTool {
+public protocol MCPTool: Sendable {
     /// The JSON-RPC method name this tool responds to.
     /// This should be a unique identifier in the format "category/action",
     /// for example "healthKit/getSteps" or "location/getCurrentPosition".
     var methodName: String { get }
+
+    /// The JSON schema for the tool's definition in OpenAI's chat completion format.
+    var toolSchema: String { get }
     
+    var toolSchemaJSON: [String: JSON] { get }
+
     /// Handle the incoming JSON-RPC call.
     /// - Parameters:
     ///   - params: The JSON-RPC parameters as a dictionary of JSON values

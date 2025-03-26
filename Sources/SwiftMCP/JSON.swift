@@ -1,7 +1,7 @@
 import Foundation
 
 /// Represents a JSON value
-public enum JSON: Codable, Equatable {
+public enum JSON: Codable, Equatable, Sendable {
     case string(String)
     case int(Int)
     case number(Double)
@@ -9,10 +9,10 @@ public enum JSON: Codable, Equatable {
     case array([JSON])
     case object([String: JSON])
     case null
-    
+
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        
+
         if let string = try? container.decode(String.self) {
             self = .string(string)
         } else if let int = try? container.decode(Int.self) {
@@ -31,22 +31,22 @@ public enum JSON: Codable, Equatable {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid JSON value")
         }
     }
-    
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        
+
         switch self {
-        case .string(let string):
+        case let .string(string):
             try container.encode(string)
-        case .int(let number):
+        case let .int(number):
             try container.encode(number)
-        case .number(let number):
+        case let .number(number):
             try container.encode(number)
-        case .bool(let bool):
+        case let .bool(bool):
             try container.encode(bool)
-        case .array(let array):
+        case let .array(array):
             try container.encode(array)
-        case .object(let object):
+        case let .object(object):
             try container.encode(object)
         case .null:
             try container.encodeNil()
