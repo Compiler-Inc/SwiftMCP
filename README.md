@@ -250,26 +250,6 @@ Provides comprehensive access to HealthKit data through the MCP interface.
           - `calories` (optional): Energy burned in kilocalories
           - `route` (optional): Array of GPS coordinates with timestamps
 
-## Error Handling
-
-The package uses the `MCPError` type for error handling, which includes:
-
-- `toolNotFound`: When the requested method doesn't exist
-- `invalidParams`: When the request parameters are invalid
-- `toolError`: Generic error case for tool-specific errors with a descriptive message
-- `jsonParsingError`: When JSON parsing fails
-- `invalidRequest`: When the JSON-RPC request format is invalid
-
-## Contributing
-
-I want to add as many iOS APIs as possible to this repo. The goal is to create a comprehensive collection of MCP-compatible tools for iOS development.
-
-Any contributions are welcome! Please feel free to submit a PR.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
 ## MLX Swift Integration
 
 ### Overview
@@ -385,3 +365,23 @@ class CustomTool: MCPTool {
     }
 }
 ```
+
+## Error Handling
+
+The package uses the `MCPError` type for error handling, which includes:
+
+- `toolNotFound`: When the requested method doesn't exist
+- `invalidParams`: When the request parameters are invalid
+- `toolError`: Generic error case for tool-specific errors with a descriptive message
+- `jsonParsingError`: When JSON parsing fails
+- `invalidRequest`: When the JSON-RPC request format is invalid
+
+## Contributing
+
+I want to add as many iOS APIs as possible to this repo. The goal is to create a comprehensive collection of MCP-compatible tools for iOS development.
+
+Any contributions are welcome! Please feel free to submit a PR.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
